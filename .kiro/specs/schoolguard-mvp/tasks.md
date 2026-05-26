@@ -6,34 +6,34 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
 
 ## Tasks
 
-- [ ] 1. Project scaffolding and shared types
-  - [ ] 1.1 Initialize monorepo structure with backend and frontend directories
+- [x] 1. Project scaffolding and shared types
+  - [x] 1.1 Initialize monorepo structure with backend and frontend directories
     - Create `backend/` (Express + TypeScript) and `frontend/` (React + Vite + TypeScript) directories
     - Add root `package.json` with workspace scripts (`npm run dev`, `npm run test`)
     - Configure `tsconfig.json` for both packages with strict mode
     - Install dependencies: express, better-sqlite3, uuid, zod, @anthropic-ai/sdk, vitest, fast-check
     - _Requirements: 12.1, 12.2_
 
-  - [ ] 1.2 Define shared data model interfaces and types
+  - [x] 1.2 Define shared data model interfaces and types
     - Create `backend/src/types/` with interfaces: `JurisdictionProfile`, `DiscoveredResource`, `LegalObligation`, `ReportingProcedure`, `Case`, `ChecklistItem`, `LegalGuidance`
     - Define enums/unions: `ProfileStatus`, `StakeholderRole`, `ResourceCategory`, `CaseStage`, `CasePriority`
     - Add Zod schemas for runtime validation of API request/response payloads
     - _Requirements: 1.2, 8.1, 6.4_
 
-  - [ ] 1.3 Set up SQLite database layer with migrations
+  - [x] 1.3 Set up SQLite database layer with migrations
     - Create `backend/src/db/` with better-sqlite3 initialization
     - Write migration for tables: `jurisdiction_profiles`, `discovered_resources`, `legal_obligations`, `reporting_procedures`, `cases`, `checklist_items`, `case_stage_history`
     - Implement basic repository functions: `createProfile`, `getProfile`, `updateProfile`, `getProfileBySchoolName`
     - _Requirements: 12.1_
 
-- [ ] 2. Jurisdiction Discovery Service (hero feature)
-  - [ ] 2.1 Implement known Dutch resource seed data
+- [x] 2. Jurisdiction Discovery Service (hero feature)
+  - [x] 2.1 Implement known Dutch resource seed data
     - Create `backend/src/services/knownResources.ts` with pre-seeded Dutch resources (Kindertelefoon, Meldknop.nl, Stichting School & Veiligheid, Stop Pesten NU, stoppestennu.nl)
     - Each resource includes: name, description, url, phone, targetAudience, category, confidence (0.99)
     - Implement `getKnownResourcesForCountry(country: string)` function
     - _Requirements: 2.1, 2.3, 7.5_
 
-  - [ ] 2.2 Implement the AI agent loop with Anthropic tool-use
+  - [x] 2.2 Implement the AI agent loop with Anthropic tool-use
     - Create `backend/src/services/aiAgent.ts` implementing `processAgentLoop()`
     - Define the `web_search` tool schema for Anthropic tool-use
     - Implement the agentic loop: send message → process tool_use blocks → execute web search → feed results back → repeat until stop
@@ -41,7 +41,7 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - Handle partial failures: if a search fails, continue with remaining goals
     - _Requirements: 1.1, 1.5, 9.1, 9.2_
 
-  - [ ] 2.3 Implement `mergeWithKnownResources()` logic
+  - [x] 2.3 Implement `mergeWithKnownResources()` logic
     - Create merge function that combines AI-discovered resources with known resources
     - Implement fuzzy matching (name includes matchKey, URL contains fragment) for deduplication
     - When duplicate found: set `isKnownResource = true`, confidence = max(discovered, 0.95)
@@ -55,7 +55,7 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - **Property 3: Known resource confidence floor**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 7.5**
 
-  - [ ] 2.5 Implement `JurisdictionDiscoveryService` orchestrator
+  - [x] 2.5 Implement `JurisdictionDiscoveryService` orchestrator
     - Create `backend/src/services/jurisdictionDiscovery.ts` implementing `IJurisdictionDiscoveryService`
     - Implement `discoverJurisdiction(schoolName)`: check cache → create profile → run AI agent → merge known resources → store as pending_review
     - Implement `approveProfile(profileId, teacherId)`: validate status is pending_review → update to approved → set approvedAt, approvedBy → mark all resources verified
@@ -73,11 +73,11 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - **Property 7: Confidence score bounds**
     - **Validates: Requirements 7.1, 7.2**
 
-- [ ] 3. Checkpoint — Core discovery service
+- [x] 3. Checkpoint — Core discovery service
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. Resource Routing Service
-  - [ ] 4.1 Implement `ResourceRoutingService`
+- [x] 4. Resource Routing Service
+  - [x] 4.1 Implement `ResourceRoutingService`
     - Create `backend/src/services/resourceRouting.ts` implementing `IResourceRoutingService`
     - Implement `getResourcesForRole(role, jurisdictionId)`: fetch approved profile → filter by targetAudience includes role → filter by verifiedByTeacher === true → sort (known first, then confidence desc)
     - Implement `getAllResources(jurisdictionId)`: return all verified resources from approved profile
@@ -90,8 +90,8 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - **Property 5: Resource routing sort order**
     - **Validates: Requirements 3.1, 3.2, 3.3, 4.4**
 
-- [ ] 5. Case Management Service
-  - [ ] 5.1 Implement `CaseManagementService`
+- [x] 5. Case Management Service
+  - [x] 5.1 Implement `CaseManagementService`
     - Create `backend/src/services/caseManagement.ts` implementing `ICaseManagementService`
     - Implement `createCase(data)`: validate jurisdictionProfileId references an approved profile → create case with stage "report" → generate checklist via AI using jurisdiction context
     - Implement `updateStage(caseId, stage)`: validate transition → update stage → record in case_stage_history with timestamp and teacherId
@@ -108,11 +108,11 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - **Property 12: Case stage audit trail**
     - **Validates: Requirements 6.5**
 
-- [ ] 6. Checkpoint — Backend services complete
+- [x] 6. Checkpoint — Backend services complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. REST API layer
-  - [ ] 7.1 Implement jurisdiction discovery API routes
+- [x] 7. REST API layer
+  - [x] 7.1 Implement jurisdiction discovery API routes
     - Create `backend/src/routes/jurisdiction.ts`
     - `POST /api/jurisdiction/discover` — accepts `{ schoolName }`, returns JurisdictionProfile (status: pending_review or cached approved)
     - `GET /api/jurisdiction/:profileId` — returns profile by ID
@@ -123,14 +123,14 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - Add Zod validation middleware for all request bodies
     - _Requirements: 1.1, 1.2, 1.3, 4.2, 4.3, 4.5, 5.4_
 
-  - [ ] 7.2 Implement resource routing API routes
+  - [x] 7.2 Implement resource routing API routes
     - Create `backend/src/routes/resources.ts`
     - `GET /api/resources?role={role}&jurisdictionId={id}` — returns filtered resources for role
     - `GET /api/resources/all?jurisdictionId={id}` — returns all verified resources
     - Add input validation for role enum
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-  - [ ] 7.3 Implement case management API routes
+  - [x] 7.3 Implement case management API routes
     - Create `backend/src/routes/cases.ts`
     - `POST /api/cases` — create case linked to jurisdiction profile
     - `GET /api/cases/:id` — get case with checklist
@@ -140,25 +140,25 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - Add Zod validation for all inputs
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 11.1, 11.3_
 
-  - [ ] 7.4 Implement Express app entry point and middleware
+  - [x] 7.4 Implement Express app entry point and middleware
     - Create `backend/src/index.ts` with Express app setup
     - Add CORS middleware, JSON body parser, error handling middleware
     - Mount all route modules
     - Add environment variable loading (ANTHROPIC_API_KEY)
     - _Requirements: 12.2_
 
-- [ ] 8. Checkpoint — Backend API complete
+- [x] 8. Checkpoint — Backend API complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 9. Frontend — Discovery form and review panel (hero feature UI)
-  - [ ] 9.1 Set up React + Vite frontend with routing
+- [x] 9. Frontend — Discovery form and review panel (hero feature UI)
+  - [x] 9.1 Set up React + Vite frontend with routing
     - Initialize Vite + React + TypeScript project in `frontend/`
     - Install dependencies: react-router-dom, axios or fetch wrapper
     - Set up basic routing: `/discover`, `/review/:profileId`, `/resources`, `/cases`, `/report`
     - Create shared API client module for backend communication
     - _Requirements: 12.2_
 
-  - [ ] 9.2 Implement School Discovery Form component
+  - [x] 9.2 Implement School Discovery Form component
     - Create `frontend/src/components/DiscoveryForm.tsx`
     - Input field for school name with submit button
     - On submit: call `POST /api/jurisdiction/discover`
@@ -168,7 +168,7 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - On completion: navigate to review panel
     - _Requirements: 1.1, 10.1, 10.2, 10.3_
 
-  - [ ] 9.3 Implement Teacher Review Panel component
+  - [x] 9.3 Implement Teacher Review Panel component
     - Create `frontend/src/components/ReviewPanel.tsx`
     - Display discovered resources, legal obligations, and reporting procedures
     - Show confidence scores with visual indicators (warning badge if profile < 0.5, de-emphasize resources < 0.4)
@@ -177,7 +177,7 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - Stale profile: show banner "information may be outdated" with refresh button
     - _Requirements: 4.1, 4.2, 4.3, 4.5, 5.3, 7.3, 7.4_
 
-  - [ ] 9.4 Implement Resource Viewer component
+  - [x] 9.4 Implement Resource Viewer component
     - Create `frontend/src/components/ResourceViewer.tsx`
     - Role selector (student, parent, teacher, coordinator)
     - Fetch and display resources filtered by selected role
@@ -185,8 +185,8 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - Display action buttons (call, visit website, report) per resource category
     - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 10. Frontend — Case management and student reporting
-  - [ ] 10.1 Implement Teacher Dashboard component
+- [x] 10. Frontend — Case management and student reporting
+  - [x] 10.1 Implement Teacher Dashboard component
     - Create `frontend/src/components/TeacherDashboard.tsx`
     - List active cases with status indicators
     - Show new incident alerts
@@ -194,7 +194,7 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - Link to create new case or start new discovery
     - _Requirements: 11.3, 6.4_
 
-  - [ ] 10.2 Implement Case Lifecycle component
+  - [x] 10.2 Implement Case Lifecycle component
     - Create `frontend/src/components/CaseLifecycle.tsx`
     - Display case details with jurisdiction-aware checklist
     - Stage progression UI (report → triage → review → action → resolve)
@@ -202,7 +202,7 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     - Stage transition buttons with confirmation
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-  - [ ] 10.3 Implement Student Report Form component
+  - [x] 10.3 Implement Student Report Form component
     - Create `frontend/src/components/StudentReportForm.tsx`
     - Simple form: description (textarea), date (date picker), optional file attachment placeholder
     - On submit: create case via `POST /api/cases` linked to school's approved profile
@@ -250,14 +250,11 @@ Implement a local-first hackathon MVP where a teacher enters a school name and a
     { "id": 1, "tasks": ["1.2", "1.3"] },
     { "id": 2, "tasks": ["2.1", "2.2"] },
     { "id": 3, "tasks": ["2.3", "2.5"] },
-    { "id": 4, "tasks": ["2.4", "2.6", "2.7"] },
-    { "id": 5, "tasks": ["4.1", "5.1"] },
-    { "id": 6, "tasks": ["4.2", "5.2", "5.3"] },
-    { "id": 7, "tasks": ["7.1", "7.2", "7.3", "7.4"] },
-    { "id": 8, "tasks": ["9.1"] },
-    { "id": 9, "tasks": ["9.2", "9.3", "9.4", "10.1", "10.2", "10.3"] },
-    { "id": 10, "tasks": ["11.1"] },
-    { "id": 11, "tasks": ["11.2", "11.3"] }
+    { "id": 4, "tasks": ["4.1", "5.1"] },
+    { "id": 5, "tasks": ["7.1", "7.2", "7.3", "7.4"] },
+    { "id": 6, "tasks": ["9.1"] },
+    { "id": 7, "tasks": ["9.2", "9.3", "9.4", "10.1", "10.2", "10.3"] },
+    { "id": 8, "tasks": ["11.1", "11.3"] }
   ]
 }
 ```
