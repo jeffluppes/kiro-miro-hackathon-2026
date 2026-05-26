@@ -1,110 +1,187 @@
-# Requirements: SchoolGuard (Defuse) MVP
+# Requirements Document
 
 > Source: Miro board https://miro.com/app/board/uXjVHOVGJIA=/
+> Scope: Hackathon proof of concept (web app, minimal auth, no encryption)
 
-## Problem Statement
+## Introduction
 
-Teachers spend 5-10 hours per week managing administrative tasks related to bullying cases. This platform reduces that burden by consolidating case management, secure communication, and compliance tracking into one system.
+SchoolGuard (codename: Defuse) is a platform that helps teachers manage bullying cases at school. Teachers currently spend 5-10 hours per week on bullying-related admin work, navigating fragmented tools, multiple stakeholders, and varying local procedures. This PoC demonstrates how an AI-assisted case management system with an agentic helpline can consolidate that workflow.
 
-## Functional Requirements
+The PoC focuses on demonstrating the core value: a student flags an issue, a teacher gets alerted, an AI helps generate the right next steps, and communication is routed to the appropriate stakeholders (parents, government, law enforcement) with the right tone.
 
-### REQ-1: User Authentication (Simplified for PoC)
-**Priority:** Medium | **Estimate:** S
+## Glossary
 
-When a user opens the app, the system shall provide simple email/password authentication so that users can log in and access their cases.
+- **Case** — a record of a bullying incident, with lifecycle stages from initial report to resolution
+- **Helpline** — the AI agent that proactively collects signals, supports users (kids/parents/teachers), and routes messages
+- **Stakeholder** — anyone involved in a case: student, teacher, parent, school admin, government body, law enforcement
+- **Jurisdiction** — the local legal context (e.g., a school in the Netherlands has different reporting obligations than one in Germany)
+- **Local resource** — a regional support organization, e.g., Bureau Halt in the Netherlands
+
+## Requirements
+
+### REQ-1: Lightweight User Identity
+
+When a user opens the app, the system shall provide a basic role-based identity (student or teacher) so that case access and views can be differentiated, without requiring strong auth in the PoC.
+
+**Priority:** Low | **Estimate:** XS
 
 **Acceptance Criteria:**
-- [ ] Email/password login
-- [ ] Basic role distinction (teacher vs. student)
-- [ ] Session persistence (stay logged in)
+- [ ] User picks/enters a role on first load (student or teacher)
+- [ ] Role persists across sessions (localStorage is fine)
+- [ ] No password required for PoC
 
-### REQ-2: Incident Reporting & Alerts
+### REQ-2: Student Incident Reporting
+
+When a student wants to report a bullying incident, the system shall provide a confidential reporting form so that issues are captured without barriers.
+
 **Priority:** Critical | **Estimate:** S
 
-When a student submits a confidential incident report, the system shall send a real-time alert notification to the assigned teacher so that incidents are addressed promptly.
+**Acceptance Criteria:**
+- [ ] Student-facing form with description, date, optional attachments
+- [ ] Submission creates a new case in the system
+- [ ] Confidentiality is communicated clearly in the UI
+
+### REQ-3: Teacher Alerts
+
+When a student submits a report, the system shall surface the new incident to the relevant teacher so that they can act quickly.
+
+**Priority:** Critical | **Estimate:** S
 
 **Acceptance Criteria:**
-- [ ] Students can submit confidential reports via the mobile app
-- [ ] Teachers receive push notifications for new incidents
-- [ ] Alert dashboard shows active cases and unresolved incidents with priority indicators
+- [ ] New incidents appear on the teacher's dashboard immediately (polling or push)
+- [ ] Visual indicator for unread/new alerts
+- [ ] In-app notification (browser notification API acceptable for PoC)
 
-### REQ-3: Case Management
+### REQ-4: Case Lifecycle Management
+
+When a teacher opens a case, the system shall display the full lifecycle (Report → Triage → Review → Action → Resolve) so that cases are tracked end-to-end and nothing falls through the cracks.
+
 **Priority:** Critical | **Estimate:** L
 
-When a teacher opens a case, the system shall display the full incident lifecycle (Report → Triage → Review → Action → Resolve) so that cases are tracked from initial report to resolution.
-
 **Acceptance Criteria:**
-- [ ] Case files are created with encrypted documentation
-- [ ] 5-stage lifecycle is visible and trackable
-- [ ] Teachers can manage up to 5 active cases in the free tier
-- [ ] Case completion rate is tracked (target: 75% reach documented resolution)
+- [ ] Each case has a stage indicator
+- [ ] Teacher can move a case through stages
+- [ ] Case detail view shows incident summary, stakeholders, and history
+- [ ] Stage changes are recorded in the audit log
 
-### REQ-4: Evidence Documentation (Simplified for PoC)
+### REQ-5: Evidence Documentation
+
+When a teacher documents evidence for a case, the system shall accept file uploads and written notes so that incidents are properly recorded.
+
 **Priority:** High | **Estimate:** M
 
-When a teacher documents evidence, the system shall provide file and note uploads so that incidents are properly documented.
-
 **Acceptance Criteria:**
-- [ ] Photo/file upload to cloud storage
-- [ ] Written statement/notes input
-- [ ] Evidence list visible per case
+- [ ] Upload photos and files (stored to cloud or local storage)
+- [ ] Add written notes/statements per case
+- [ ] Evidence list is visible on the case detail view
 
-### REQ-5: AI-Generated Task Checklists
+### REQ-6: AI-Generated Task Checklists
+
+When a case is created, the system shall generate an AI-powered checklist of recommended next steps so that teachers follow proper procedures without memorizing them.
+
 **Priority:** High | **Estimate:** M
 
-When a case is created, the system shall generate AI-powered task checklists so that teachers follow proper procedures and reduce administrative time.
+**Acceptance Criteria:**
+- [ ] Checklist is generated when a case is opened
+- [ ] Checklist adapts to the jurisdiction selected for the case
+- [ ] Each item can be marked complete
+- [ ] Progress (e.g., 3/5 done) is visible on the case
+
+### REQ-7: Agentic Helpline
+
+When a stakeholder (student, parent, teacher) interacts with the platform, the system shall provide an AI helpline that proactively collects signs of bullying, answers procedural questions, and supports them through next steps.
+
+**Priority:** High | **Estimate:** L
 
 **Acceptance Criteria:**
-- [ ] Checklists are auto-generated based on case type and jurisdiction
-- [ ] Progress is tracked (percentage complete)
-- [ ] Legal context is provided at each step (e.g., EU directives, local legislation)
+- [ ] Chat-style interface accessible from the dashboard
+- [ ] AI agent responds with context-appropriate support
+- [ ] Agent can detect bullying signals from conversation and prompt the user to file a report
+- [ ] Conversation can be linked to a case as evidence
 
-### REQ-6: Secure Multi-Stakeholder Communication
+### REQ-8: Multi-Stakeholder Communication with Tone Adaptation
+
+When a teacher needs to send a message about a case, the system shall route it to the appropriate channel (student, parent, internal staff) and adapt the tone for the recipient so that messages are contextually appropriate.
+
 **Priority:** High | **Estimate:** M
 
-When a teacher needs to communicate about a case, the system shall provide encrypted channels for students, parents, and internal staff so that sensitive information is shared securely.
+**Acceptance Criteria:**
+- [ ] Three channels per case: Student, Parent, Internal Staff
+- [ ] AI rewrites/suggests message phrasing based on recipient
+- [ ] Unread message indicators per channel
+- [ ] Message history is part of the case record
+
+### REQ-9: Government & Law Enforcement Communication
+
+When a case requires escalation to authorities, the system shall provide a channel to communicate with local government bodies and law enforcement so that mandatory reporting is streamlined.
+
+**Priority:** Medium | **Estimate:** M
 
 **Acceptance Criteria:**
-- [ ] Separate encrypted channels: Student, Parent, Internal Staff
-- [ ] Unread message indicators
-- [ ] AI tone adaptation for different recipients
-- [ ] Communication routed to appropriate channels automatically
+- [ ] "Escalate to authorities" action on a case
+- [ ] AI generates a draft report appropriate to the jurisdiction
+- [ ] Outbound message log on the case
+- [ ] PoC: integration is mocked or uses a stub endpoint (real government APIs out of scope)
 
-### REQ-7: Audit Trail (Simplified for PoC)
+### REQ-10: Legal Guidance & Procedural Information
+
+When a teacher is handling a case, the system shall surface jurisdiction-specific legal context and procedural guidance so that they have the information they need without leaving the app.
+
+**Priority:** Medium | **Estimate:** S
+
+**Acceptance Criteria:**
+- [ ] Legal context panel on the case detail view
+- [ ] Content adapts to selected jurisdiction
+- [ ] References to relevant laws/directives (e.g., EU directives, local school law)
+
+### REQ-11: Local Resource Directory
+
+When a teacher needs external support for a case, the system shall list relevant local resources so that they can connect students/parents to specialized organizations.
+
+**Priority:** Medium | **Estimate:** S
+
+**Acceptance Criteria:**
+- [ ] List of local support organizations (e.g., Bureau Halt for Netherlands)
+- [ ] Filter/scope by jurisdiction
+- [ ] Each entry has contact info and a description
+
+### REQ-12: Calm, Professional UI
+
+When any user interacts with the app, the system shall present a calm, professional interface so that users feel reassured while handling sensitive situations.
+
+**Priority:** High | **Estimate:** M
+
+**Acceptance Criteria:**
+- [ ] Consistent design system (color palette, spacing, typography)
+- [ ] Soft, non-alarming colors and language
+- [ ] Clear navigation structure
+
+### REQ-13: Basic Audit Trail
+
+When actions are taken on a case, the system shall log key events so that there's a basic activity history per case.
+
+**Priority:** Medium | **Estimate:** S
+
+**Acceptance Criteria:**
+- [ ] Log entries for: case created, stage changed, evidence added, message sent
+- [ ] Each entry has timestamp and user attribution
+- [ ] Visible in the case detail view
+
+### REQ-14: Cloud-Native with Local Run Option
+
+When the platform is deployed, it shall be runnable in the cloud and locally on a developer machine so that schools without cloud infrastructure can still operate it.
+
 **Priority:** Low | **Estimate:** S
 
-When actions are taken on a case, the system shall log key events so that a basic activity history is available.
-
 **Acceptance Criteria:**
-- [ ] Basic event log per case (created, updated, evidence added)
-- [ ] Timestamps and user attribution
+- [ ] Deployable to a cloud provider (Vercel, Railway, AWS)
+- [ ] `docker-compose up` or `npm run dev` runs the entire stack locally
+- [ ] No external services required for local mode beyond an LLM API key
 
-### REQ-8: Case Tracking & Resolution
-**Priority:** High | **Estimate:** S
+## Non-Functional Requirements
 
-When a teacher views their dashboard, the system shall display case timelines and stakeholder interactions so that no cases fall through the cracks.
-
-**Acceptance Criteria:**
-- [ ] Resolution task checklist with AI-generated steps
-- [ ] Audit trail with sync status
-- [ ] Legal guidance specific to jurisdiction with compliance deadlines
-
-### REQ-9: Offline Mode
-**Priority:** Low | **Estimate:** M — *Deferred, not in PoC scope*
-
-### REQ-10: Push Notifications
-**Priority:** High | **Estimate:** S
-
-When critical case developments occur, the system shall send push notifications so that teachers stay informed without constantly checking the app.
-
-**Acceptance Criteria:**
-- [ ] Real-time push notifications for new incidents
-- [ ] Configurable notification preferences
-- [ ] Works on both iOS and Android
-
-## Non-Functional Requirements (PoC scope)
-
-- **Security:** Basic auth; HTTPS in transit (no E2E encryption for PoC)
-- **Platform:** Web app (React) — mobile can come later
-- **UI/UX:** Calm, professional interface designed to reassure users handling sensitive situations
-- **Hosting:** AWS or simple cloud deployment (Vercel/Railway acceptable for demo)
+- **Security:** Minimal for PoC. HTTPS in transit only. No encryption at rest. No GDPR-grade controls.
+- **Platform:** Web app (React + Vite). No mobile apps in PoC.
+- **Hosting:** Lightweight cloud deployment (Vercel, Railway, or similar) plus local docker option.
+- **AI:** Single LLM provider (e.g., OpenAI, Anthropic, Bedrock) for checklists, helpline, and tone adaptation.
+- **Out of scope:** Biometric auth, end-to-end encryption, real government API integrations, mobile/offline mode, multi-tenant billing tiers.

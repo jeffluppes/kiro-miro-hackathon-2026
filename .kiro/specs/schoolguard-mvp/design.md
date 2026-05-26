@@ -1,111 +1,184 @@
-# Design: SchoolGuard (Defuse) MVP
+# Design Document
 
 > Source: Miro board https://miro.com/app/board/uXjVHOVGJIA=/
 
-## Architecture Overview
+## Overview
 
-Web-based PoC with a React frontend and lightweight backend. The system follows a hub-and-spoke model where the SchoolGuard Platform is the central processing system connecting Students, Teachers, Parents, and Government Systems.
+SchoolGuard (codename: Defuse) is a web-based PoC that helps teachers manage bullying cases. It combines AI-assisted case management, an agentic helpline that proactively supports students/parents/teachers, and tone-aware multi-stakeholder communication. The PoC runs in the cloud or fully local via `docker-compose`.
 
-## System Components
+This design covers the structure needed to demonstrate the end-to-end flow: a student flags an issue (via form or via helpline conversation), a teacher gets alerted, AI generates a jurisdiction-aware checklist, and the teacher communicates with parents, staff, and authorities with AI-drafted, tone-adapted messages.
 
-### 1. Web App (React + Vite)
+## Architecture
+
+The system follows a hub-and-spoke model with the SchoolGuard Platform connecting Students, Teachers, Parents, Government Systems, and Local Resources.
+
+```
+┌──────────────────────────────────────────────┐
+│  App Entry (role pick: student or teacher)    │
+│   ├── Student → Report Incident               │
+│   │              └── Helpline (AI chat)        │
+│   └── Teacher → Dashboard                     │
+│         ├── Case Detail                       │
+│         │    ├── Lifecycle Tracker             │
+│         │    ├── Evidence Documentation        │
+│         │    ├── AI Checklist                  │
+│         │    ├── Communication (3 channels)    │
+│         │    ├── Legal Guidance Panel          │
+│         │    ├── Local Resources Panel         │
+│         │    └── Authorities Channel           │
+│         └── Helpline (AI chat)                │
+└──────────────────────────────────────────────┘
+```
+
+### Sequence Flow
+
+```
+Student          Teacher          Platform         Helpline AI    Parent       Government
+  │                │                │                │              │              │
+  │── Open Helpline ──────────────────────────────>│              │              │
+  │<─ Conversation, signal detected ───────────────│              │              │
+  │── Submit incident ─────────────>│              │              │              │
+  │                │<── Alert ──────│              │              │              │
+  │                │── Open case ──>│              │              │              │
+  │                │<── AI checklist ──────────────│              │              │
+  │                │── Upload evidence ──>│        │              │              │
+  │                │── Send message ──>│           │              │              │
+  │                │                │── Tone-adapted ─────────────>│              │
+  │                │── Escalate ───>│              │              │              │
+  │                │                │── Drafted report ─────────────────────────>│
+```
+
+## Components and Interfaces
+
+### Web App (React + Vite + TypeScript)
 - Single-page app, responsive design
-- Simple email/password auth (JWT)
-- Real-time updates via polling or WebSocket
+- Lightweight role-based identity (student or teacher) stored in localStorage
+- Real-time-ish updates via polling
+- Browser notifications for alerts
 
-### 2. Backend API (Node.js + Express)
-- RESTful API for case management
-- JWT authentication
-- AI engine integration for checklists and tone adaptation
+### Backend API (Node.js + Express)
+- RESTful API for cases, evidence, messages, audit log
+- Endpoints for AI features (checklists, helpline chat, tone adaptation)
+- JWT-lite or session token (PoC scope)
 
-### 3. Data Layer
-- PostgreSQL or DynamoDB for case data
-- S3 for evidence file storage
-- Simple audit log table
+### Data Layer
+- SQLite for local dev, Postgres in cloud
+- Local filesystem or S3-compatible storage for evidence files
+- Single audit log table
 
-### 4. AI Services
-- Checklist generation based on case type + jurisdiction
-- Communication tone adaptation (student/parent/staff)
-- Government API integration generation
+### AI Services
+- Single LLM provider (OpenAI / Anthropic / Bedrock)
+- Functions:
+  - Generate jurisdiction-aware checklists from case context
+  - Helpline chat with bullying-signal detection
+  - Tone adaptation for messages (kid / parent / staff)
+  - Government report drafting
 
-## Screen Architecture
+### AI Endpoints (backend)
 
-Based on the prototype from the Miro board:
+- `POST /api/ai/checklist` — generate checklist from case + jurisdiction
+- `POST /api/ai/helpline/chat` — multi-turn helpline conversation with signal detection
+- `POST /api/ai/tone-adapt` — rewrite message for given recipient
+- `POST /api/ai/draft-report` — generate jurisdiction-appropriate authority report
 
-```
-┌─────────────────────────────────────────────┐
-│  App Entry                                   │
-│  └── Login (Email/Password)                  │
-│       └── Incident Alert Dashboard           │
-│            ├── Case Creation & Overview       │
-│            │    └── Evidence Documentation    │
-│            └── Communication & Resolution     │
-└─────────────────────────────────────────────┘
-```
+### Key Screens
 
-### Key Screens:
-1. **Login** — Simple email/password form
-2. **Incident Alert Dashboard** — Active cases, unresolved incidents, AI-suggested next steps
-3. **Case Creation & Overview** — 5-stage lifecycle, stakeholder info, basic audit metadata
-4. **Evidence Documentation** — File upload, notes, evidence list per case
-5. **Communication & Resolution Tracker** — Messaging channels, resolution tasks
+1. **Role Picker** — Lightweight entry point (student or teacher)
+2. **Student Report Form** — Confidential form to file an incident
+3. **Teacher Dashboard** — Active cases, new alerts, AI-suggested next steps
+4. **Case Detail** — Lifecycle, stakeholders, evidence, checklist, communication, legal context, local resources, authorities
+5. **Helpline (AI Chat)** — Available to students, parents, and teachers; can detect signals and link to case
 
-### Bottom Navigation:
-- Access | Alerts | Cases | Evidence | Comms
+## Data Models
 
-## Sequence Flow (from Miro diagram)
-
-```
-Student          Teacher          Platform         Parent       Government
-  │                 │                │                │              │
-  │─── Submit ─────────────────────>│                │              │
-  │    incident                     │                │              │
-  │                 │<── Alert ─────│                │              │
-  │                 │               │                │              │
-  │                 │── Create ────>│                │              │
-  │                 │   case file   │                │              │
-  │                 │── Upload ────>│                │              │
-  │                 │   evidence    │                │              │
-  │                 │               │── Notify ─────>│              │
-  │                 │               │                │              │
-  │                 │               │── Compliance ──────────────── >│
-  │                 │               │   report                      │
-```
-
-## Data Model
+### User
+- `id`, `role` (student | teacher), `displayName`
 
 ### Case
-- `id`, `schoolId`, `teacherId`
-- `status`: Report | Triage | Review | Action | Resolve
-- `priority`: Critical | High | Medium | Low
+- `id`, `teacherId`, `studentId` (nullable for anonymous reports)
+- `status`: report | triage | review | action | resolve
+- `priority`: critical | high | medium | low
 - `incidentType`, `description`
-- `stakeholders[]`
+- `jurisdiction` (for AI checklist + legal context)
 - `createdAt`, `updatedAt`
-- `jurisdictionSettings`
 
 ### Evidence
 - `id`, `caseId`
 - `type`: photo | statement | file | note
-- `fileUrl` (S3 or local storage reference)
+- `fileUrl` (storage reference)
+- `note` (text)
 - `uploadedBy`, `uploadedAt`
 
-### Communication
+### ChecklistItem
 - `id`, `caseId`
-- `channel`: student | parent | staff
+- `text`, `done` (boolean)
+- `order`
+
+### Message
+- `id`, `caseId`
+- `channel`: student | parent | staff | authorities
+- `direction`: inbound | outbound
+- `originalText`, `adaptedText` (for tone adaptation)
+- `sentAt`, `readAt`
+
+### HelplineConversation
+- `id`, `userId` (or anonymous)
 - `messages[]`
-- `unreadCount`
+- `linkedCaseId` (optional)
+- `signalDetected` (boolean)
+
+### LocalResource
+- `id`, `name`, `description`, `contact`, `jurisdiction`
 
 ### AuditLog
 - `id`, `caseId`, `userId`
-- `action`, `timestamp`
-- `metadata`
+- `action`, `metadata`, `timestamp`
 
-## Business Model
+## Correctness Properties
 
-| Tier | Price | Limits |
-|------|-------|--------|
-| Free | €0 | 1 teacher, 5 active cases |
-| School | €29/teacher/month | Unlimited cases, full features |
-| District | €19/teacher/month (min 50) | Centralized admin, priority support |
+### Property 1: Valid case lifecycle stage
+A case always has a stage from the defined lifecycle (Report, Triage, Review, Action, Resolve).
+**Validates: Requirements 4.1**
 
-Annual billing: 20% discount.
+### Property 2: Teacher assignment before triage
+A case must have a teacher assigned before it can be moved past Triage.
+**Validates: Requirements 4.1**
+
+### Property 3: Linked evidence and messages
+Evidence and messages are always linked to a valid case.
+**Validates: Requirements 5.1, 8.1**
+
+### Property 4: User-driven checklist completion
+AI-generated checklist items are not auto-marked done; user action is required to mark a step complete.
+**Validates: Requirements 6.1**
+
+### Property 5: Helpline conversations in audit trail
+Helpline conversations linked to a case appear in that case's audit trail.
+**Validates: Requirements 7.1, 13.1**
+
+### Property 6: Original message preservation
+Tone-adapted messages preserve the original text alongside the adapted version for audit purposes.
+**Validates: Requirements 8.1, 13.1**
+
+## Error Handling
+
+- LLM provider failures fall back to a static, jurisdiction-agnostic checklist and a UI banner that explains AI is unavailable
+- File upload failures show an inline error and allow retry; the case is not blocked from progressing
+- Authorities-channel sends are stubbed in PoC; failures log a warning rather than block the user
+- Database write failures surface a toast with a "retry" affordance; nothing is silently dropped
+
+## Testing Strategy
+
+- Manual testing for the demo flow: student report → teacher alert → checklist → message → escalate
+- A small number of unit tests around data model integrity (case stage transitions, audit log writes)
+- Mocked LLM responses for any AI endpoint tests
+- No load or security testing in PoC scope
+
+## Out of Scope (PoC)
+
+- Real biometric or strong auth
+- End-to-end encryption
+- Real government API integrations (mocked / stubbed)
+- Mobile apps and offline mode
+- Multi-tenant billing
+- GDPR-grade compliance and audit
