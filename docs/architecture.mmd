@@ -1,0 +1,112 @@
+graph TB
+    %% Users
+    Student["🧒 Leerling<br/>(Student)"]
+    Teacher["👩‍🏫 Docent<br/>(Teacher)"]
+    Parent["👪 Ouder<br/>(Parent)"]
+
+    %% Frontend
+    subgraph CloudFront["☁️ Amazon CloudFront"]
+        SPA["React SPA<br/>(Dutch UI)"]
+    end
+
+    subgraph S3Frontend["📦 S3 - Frontend"]
+        StaticAssets["Static Assets<br/>(HTML/JS/CSS)"]
+    end
+
+    %% API Layer
+    subgraph APIGW["🔌 API Gateway (REST)"]
+        DossierAPI["/api/dossiers"]
+        EvidenceAPI["/api/evidence"]
+        MessagesAPI["/api/messages"]
+        AIAPI["/api/ai/*"]
+        ResourcesAPI["/api/resources"]
+        AuditAPI["/api/audit"]
+    end
+
+    %% Lambda Functions
+    subgraph Lambdas["⚡ Lambda Functions (Node.js 20)"]
+        DossierFn["dossiers<br/>CRUD"]
+        EvidenceFn["evidence<br/>presigned URLs"]
+        MessagesFn["messages<br/>channels"]
+        ChecklistFn["checklist<br/>AI generation"]
+        HelplineFn["helpline<br/>signal detection"]
+        ToneFn["tone-adapt<br/>message rewriting"]
+        InspectieFn["inspectie<br/>report drafting"]
+        ResourcesFn["resources<br/>Dutch directory"]
+        AuditFn["audit<br/>log reader"]
+    end
+
+    %% Data Layer
+    subgraph DynamoDB["🗄️ DynamoDB"]
+        DossiersTable["Dossiers"]
+        EvidenceTable["Evidence"]
+        MessagesTable["Messages"]
+        HelplineTable["Helpline<br/>Conversations"]
+        ChecklistTable["Checklist<br/>Items"]
+        AuditTable["Audit Log"]
+    end
+
+    subgraph S3Evidence["📦 S3 - Evidence"]
+        Files["Photos, Statements,<br/>Documents"]
+    end
+
+    %% AI
+    subgraph Bedrock["🧠 Amazon Bedrock"]
+        Claude["Claude 3.5 Sonnet<br/>(Anthropic)"]
+    end
+
+    %% External (mocked)
+    Inspectie["🏛️ Onderwijsinspectie<br/>(mocked)"]
+
+    %% Connections - Users to Frontend
+    Student --> CloudFront
+    Teacher --> CloudFront
+    Parent --> CloudFront
+
+    %% Frontend serving
+    CloudFront --> S3Frontend
+
+    %% Frontend to API
+    SPA --> APIGW
+
+    %% API to Lambda
+    DossierAPI --> DossierFn
+    EvidenceAPI --> EvidenceFn
+    MessagesAPI --> MessagesFn
+    AIAPI --> ChecklistFn
+    AIAPI --> HelplineFn
+    AIAPI --> ToneFn
+    AIAPI --> InspectieFn
+    ResourcesAPI --> ResourcesFn
+    AuditAPI --> AuditFn
+
+    %% Lambda to DynamoDB
+    DossierFn --> DossiersTable
+    EvidenceFn --> EvidenceTable
+    MessagesFn --> MessagesTable
+    HelplineFn --> HelplineTable
+    ChecklistFn --> ChecklistTable
+    AuditFn --> AuditTable
+
+    %% Lambda to S3
+    EvidenceFn --> S3Evidence
+
+    %% Lambda to Bedrock
+    ChecklistFn --> Claude
+    HelplineFn --> Claude
+    ToneFn --> Claude
+    InspectieFn --> Claude
+
+    %% External
+    InspectieFn -.->|"mocked"| Inspectie
+
+    %% Styling
+    classDef user fill:#E8F5E9,stroke:#2E7D32,stroke-width:2px
+    classDef aws fill:#FF9900,stroke:#232F3E,color:#232F3E,stroke-width:2px
+    classDef ai fill:#7B1FA2,stroke:#4A148C,color:#fff,stroke-width:2px
+    classDef external fill:#ECEFF1,stroke:#607D8B,stroke-width:1px,stroke-dasharray: 5 5
+
+    class Student,Teacher,Parent user
+    class CloudFront,S3Frontend,APIGW,Lambdas,DynamoDB,S3Evidence aws
+    class Bedrock ai
+    class Inspectie external

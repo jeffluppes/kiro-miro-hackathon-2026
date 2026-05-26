@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+frontend/dist/
+backend/dist/
+infra/cdk.out/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+*.swp
+.DS_Store
+
+# CDK
+cdk.context.json
